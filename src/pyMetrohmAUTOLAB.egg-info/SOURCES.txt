@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+src/Metrohm/AUTOLAB.py
+src/Metrohm/__init__.py
+src/pyMetrohmAUTOLAB.egg-info/PKG-INFO
+src/pyMetrohmAUTOLAB.egg-info/SOURCES.txt
+src/pyMetrohmAUTOLAB.egg-info/dependency_links.txt
+src/pyMetrohmAUTOLAB.egg-info/requires.txt
+src/pyMetrohmAUTOLAB.egg-info/top_level.txt
