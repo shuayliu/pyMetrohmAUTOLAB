@@ -1,7 +1,7 @@
 <!--
  * @Author: Jonah Liu
  * @Date: 2021-09-15 18:25:11
- * @LastEditTime: 2021-09-15 19:24:39
+ * @LastEditTime: 2021-11-09 10:02:30
  * @LastEditors: Jonah Liu
  * @Description: 
 -->
@@ -27,6 +27,13 @@ class AUTOLAB():
     def measure(self,procedure):
     def save(self):
     def saveAs(self,saveName):
+        
+    def setCellOn(self,On=True):
+    def setMode(self,Mode='Potentialstatic'):   
+    def setPotential(self,potential):   
+    def setCurrentRange(self,EstimateCurrentInAmpere = 1E-6):
+    def wait(self,QuietTime=5):
+
 ```
 
 

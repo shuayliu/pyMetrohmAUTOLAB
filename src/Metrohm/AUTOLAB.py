@@ -2,7 +2,7 @@
 '''
 Author: Jonah Liu
 Date: 2021-08-20 09:50:46
-LastEditTime: 2021-09-16 11:09:54
+LastEditTime: 2021-11-09 09:58:26
 LastEditors: Jonah Liu
 Description: AUTOLAB control need pythonnet and AUTOALB SDK 1.1 first
 '''
@@ -36,6 +36,7 @@ SOFTWARE.
 
 import sys
 import time
+from math import log10,floor
 import clr
 
 def CMDLOG(ISLOG,CONTENT,INTENT='\n'):
@@ -139,6 +140,37 @@ class AUTOLAB():
             self.pcd.SaveAs(saveto)
         else:
             print("[WARNING]You should give me a NAME to save this file.\n otherwise, please use save() instead of saveAs()")
+
+    def setCellOn(self,On=True):
+        self.autolab.Ei.set_CellOnOff(On)
+        while self.autolab.Ei.get_CurrentOverload() :
+            self.autolab.Ei.set_CurrentRange(self.autolab.Ei.CurrentRange + 1)
+    
+    def setMode(self,Mode='Potentialstatic'):
+        if 'Galvanostatic' == Mode:
+            self.autolab.Ei.set_Mode(1)#Ei.EIMode.Galvanostatic=0
+        elif 'Potentialstatic' == Mode:
+            self.autolab.Ei.set_Mode(0)#Ei.EIMode.Potentiostatic=1
+        else:
+            CMDLOG(self.CMD,"Wrong workstation mode, Options: Potentialstatic/Galvanostatic, PotentialStatic for default.")
+            self.autolab.Ei.set_Mode(0)#Potentialstatic for default
+    
+    def setPotential(self,potential):
+        self.setMode('Potentialstatic')
+        self.autolab.Ei.set_Setpoint(potential)
+        if self.autolab.Ei.get_CurrentOverload() :
+            self.autolab.Ei.set_CurrentRange(self.autolab.Ei.Current + 1)
+            
+        return self.autolab.Ei.PotentialApplied
+    
+    def setCurrentRange(self,EstimateCurrentInAmpere = 1E-6):
+        currentLevel = floor(log10(EstimateCurrentInAmpere))
+        self.autolab.Ei.set_CurrentRange(currentLevel)
+        
+        return self.autolab.Ei.CurrentRange
+        
+    def wait(self,QuietTime=5):
+        time.sleep(QuietTime)
     #TODO:
     # def EIS(self,EISProc=R"E:\LSh\PicoView 1.14\scripts\STEP0-FRA.nox"):
     #     self.measure(EISProc)
