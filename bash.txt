@@ -1,0 +1,2 @@
+python -m build
+twine upload --repository pypi .\dist\pyMetrohmAUTOLAB-0.0.4*

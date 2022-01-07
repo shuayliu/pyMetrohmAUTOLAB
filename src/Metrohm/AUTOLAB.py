@@ -38,6 +38,7 @@ import sys
 import time
 from math import log10,floor
 import clr
+import numpy as np
 
 def CMDLOG(ISLOG,CONTENT,INTENT='\n'):
     if ISLOG:
@@ -59,8 +60,9 @@ class AUTOLAB():
     
     def __init__(self,sdk=R"C:\Program Files\Metrohm Autolab\autolabsdk\EcoChemie.Autolab.Sdk",
                  adx=R"C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\Adk.x"):
-        self.setSDKandADX(sdk,adx)
         self.autolab = None
+        self.CMD = True
+        self.setSDKandADX(sdk,adx)
 
     def __del__(self):
         if self.autolab == None:
@@ -81,6 +83,8 @@ class AUTOLAB():
         
         if clr.FindAssembly(self.sdk):
             clr.AddReference(self.sdk)
+            from EcoChemie.Autolab.Sdk import Instrument
+            self.autolab = Instrument()
         else:
             print("[ERROR] Cannot find %s.dll"%self.sdk)
             print("[ERROR] Reload function setSDKandADX(adk,adx) with necessary files")
@@ -91,8 +95,6 @@ class AUTOLAB():
     def connectToAutolab(self,
                          hdw=R"C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\PGSTAT302N\HardwareSetup.FRA32M.xml"):
         # please ensure that has firstly call self.setSDKandADX()
-        from EcoChemie.Autolab.Sdk import Instrument
-        self.autolab = Instrument()
         self.autolab.AutolabConnection.EmbeddedExeFileToStart = self.Adx
         self.autolab.set_HardwareSetupFile(hdw)
         try:
@@ -171,6 +173,67 @@ class AUTOLAB():
         
     def wait(self,QuietTime=5):
         time.sleep(QuietTime)
+    
+    def loadData(self,filename):
+        Data = None
+        try:
+            pcd = self.autolab.LoadProcedure(filename)
+            
+            if pcd.Commands.ContainsId('FHCyclicVoltammetry2'):
+                CMDLOG(self.CMD,"It is a CV procedure DATA!\n");
+                cmd = pcd.Commands['FHCyclicVoltammetry2']
+                sig = cmd.Signals
+#                sigTime      = np.array(sig.get_Item('CalcTime').ValueAsObject)
+#                sigCurrent   = np.array(sig.get_Item('EI_0.CalcCurrent').ValueAsObject)
+#                sigPotential = np.array(sig.get_Item('EI_0.CalcPotential').ValueAsObject)
+#                sigPotAppl   = np.array(sig.get_Item('SetpointApplied').ValueAsObject)
+#                
+                Data = np.array([
+                    sig.get_Item('SetpointApplied').ValueAsObject,
+                    sig.get_Item('EI_0.CalcCurrent').ValueAsObject,
+                    sig.get_Item('CalcTime').ValueAsObject,
+                    sig.get_Item('ScanNumber').ValueAsObject                    
+                    ]).T
+                
+                CMDLOG(self.CMD,"The File Format is %s \n"%
+                            ' '.join(['SetpointApplied',
+                            'EI_0.CalcCurrent',
+                            'CalcTime',
+                            'ScanNumber'])
+                            )
+                    
+            elif pcd.Commands.ContainsId('PlotsNyquist') and pcd.Commands.ContainsId('PlotsBodeModulus'):
+                CMDLOG(self.CMD,"It is a CV procedure DATA!\n");
+
+                cmd1 = pcd.Commands['PlotsNyquist']
+                cmd2 = pcd.Commands['PlotsBodeModulus']
+                
+                Data = np.array([
+                    cmd1.CommandParameters['Z'].ValueAsObject,#Freq
+                    cmd1.CommandParameters['X'].ValueAsObject,#Zr
+                    cmd1.CommandParameters['Y'].ValueAsObject,#Zi
+                    cmd2.CommandParameters['Y'].ValueAsObject, #ZMod
+                    cmd2.CommandParameters['Z'].ValueAsObject#-Phase
+                    ]).T
+                    
+                CMDLOG(self.CMD,"The File Format is %s \n"%
+                            ' '.join(['Frequency',
+                            'Zreal',
+                            'Zimaginary',
+                            'Zmodulus',
+                            '-Phase'])
+                            )
+                    
+            
+        except Exception as e:
+            print(repr(e))
+        
+        finally:
+            if None == Data: 
+                raise Exception('LoadFailedException',Data)
+            else:
+                return Data
+
     #TODO:
     # def EIS(self,EISProc=R"E:\LSh\PicoView 1.14\scripts\STEP0-FRA.nox"):
     #     self.measure(EISProc)
