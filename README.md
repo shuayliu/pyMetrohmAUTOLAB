@@ -33,6 +33,7 @@ class AUTOLAB():
     def setPotential(self,potential):   
     def setCurrentRange(self,EstimateCurrentInAmpere = 1E-6):
     def wait(self,QuietTime=5):
+    def loadData(self,filename):
 
 ```
 
