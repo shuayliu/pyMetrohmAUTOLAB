@@ -8,7 +8,7 @@
 # Metrohm AUTOLAB control package
 
 This is a **unofficial** control package to Metrohm-AUTOALB. 
-This package contains a main pacakge named ```AUTOALB()```
+This package contains a main pacakge named ```AUTOLAB()```
 
 ## class structure and implemented functions:
 ```python
@@ -40,7 +40,7 @@ class AUTOLAB():
 
 ## how to use it:
 - Step 0,
-  install the requirement softerware,
+  install the required packages
 
     ```bash
     pip install pythonnet
@@ -55,16 +55,16 @@ class AUTOLAB():
     import Metrohm.AUTOLAB as EC
     ```
 
-- Step 2, tell Python where your instrument located
+- Step 2, tell Python where your instrument is located
 
     ```python
-    # tell the codes where your SDK install first
+    # tell the code where your SDK is located
     hdw=R'C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\PGSTAT302N\HardwareSetup.FRA32M.xml',
     sdk=R"C:\Program Files\Metrohm Autolab\autolabsdk\EcoChemie.Autolab.Sdk"
     adx=R"C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\Adk.x"
     ```
 
-- Setp 3, initialise the AUTOLAB class(C's bad habbit)
+- Setp 3, initialise the AUTOLAB class (C's bad habbit)
 
     ```python
     # initializing the class first
@@ -93,7 +93,7 @@ class AUTOLAB():
     It is a good habit, but not always necessary.
 
     ```python
-    # it is a good habit to del the instance after script
+    # it is a good habit to del the instance at the end of the script
     del autolab
     ```
 
