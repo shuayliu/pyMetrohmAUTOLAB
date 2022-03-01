@@ -4,7 +4,7 @@ Author: Jonah Liu
 Date: 2021-08-20 09:50:46
 LastEditTime: 2021-11-09 09:58:26
 LastEditors: Jonah Liu
-Description: AUTOLAB control need pythonnet and AUTOALB SDK 1.1 first
+Description: AUTOLAB control need pythonnet and AUTOLAB SDK 1.1 first
 '''
 
 
@@ -75,7 +75,7 @@ class AUTOLAB():
             self.autolab.Disconnect()
         except:
             print("[ERROR] Cannot unlinke AUTOLAB, this might caused by unusual shut down of AUTOLAB.")
-            print("\n-----------------------\n Try to restart AUTOALB manually \n-----------------------")
+            print("\n-----------------------\n Try to restart AUTOLAB manually \n-----------------------")
     
     def setSDKandADX(self,sdk,adx):
         self.Adx = adx
@@ -87,7 +87,7 @@ class AUTOLAB():
             self.autolab = Instrument()
         else:
             print("[ERROR] Cannot find %s.dll"%self.sdk)
-            print("[ERROR] Reload function setSDKandADX(adk,adx) with necessary files")
+            print("[ERROR] Reload function setSDKandADX(sdk,adx) with necessary files")
     
     def isMeasuring(self):
         return self.pcd.IsMeasuring
@@ -130,7 +130,7 @@ class AUTOLAB():
                 self.connectToAutolab(self.autolab.get_HardwareSetupFile())
                 self.measure(procedure)
             except:
-                print("[ERROR] We must descipt our equipment(such as PGSTAT302N\HardwareSetup.FRA32M.xml) first.\n find it in SDK folder")   
+                print("[ERROR] We must descipt our equipment (such as PGSTAT302N\HardwareSetup.FRA32M.xml) first.\n Find it in SDK folder")   
     
     def save(self):
         self.saveAs(self.pcd.get_FileName())
