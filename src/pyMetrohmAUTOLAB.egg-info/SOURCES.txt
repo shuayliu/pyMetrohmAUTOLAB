@@ -9,3 +9,8 @@ src/pyMetrohmAUTOLAB.egg-info/SOURCES.txt
 src/pyMetrohmAUTOLAB.egg-info/dependency_links.txt
 src/pyMetrohmAUTOLAB.egg-info/requires.txt
 src/pyMetrohmAUTOLAB.egg-info/top_level.txt
+src/pymetrohmautolab.egg-info/PKG-INFO
+src/pymetrohmautolab.egg-info/SOURCES.txt
+src/pymetrohmautolab.egg-info/dependency_links.txt
+src/pymetrohmautolab.egg-info/requires.txt
+src/pymetrohmautolab.egg-info/top_level.txt

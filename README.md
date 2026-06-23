@@ -1,99 +1,267 @@
-<!--
- * @Author: Jonah Liu
- * @Date: 2021-09-15 18:25:11
- * @LastEditTime: 2021-11-09 10:02:30
- * @LastEditors: Jonah Liu
- * @Description: 
--->
-# Metrohm AUTOLAB control package
+# pymetrohmautolab
 
-This is a **unofficial** control package to Metrohm-AUTOALB. 
-This package contains a main pacakge named ```AUTOLAB()```
+> A Python wrapper for **Metrohm Autolab** potentiostat control via the `EcoChemie.Autolab.Sdk` .NET assembly.
+>
+> **Author**: Shuay Liu
 
-## class structure and implemented functions:
-```python
-class AUTOLAB():
-    
-    def __init__(self,
-                 sdk=R"C:\Program Files\Metrohm Autolab\autolabsdk\EcoChemie.Autolab.Sdk",
-                 adx=R"C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\Adk.x"):
- 
-    def disconnectAutolab(self):
-    def setSDKandADX(self,sdk,adx):
- 
-    def isMeasuring(self):
-    def connectToAutolab(self,
-                         hdw=R"C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\PGSTAT302N\HardwareSetup.FRA32M.xml"):
-    def measure(self,procedure):
-    def save(self):
-    def saveAs(self,saveName):
-        
-    def setCellOn(self,On=True):
-    def setMode(self,Mode='Potentialstatic'):   
-    def setPotential(self,potential):   
-    def setCurrentRange(self,EstimateCurrentInAmpere = 1E-6):
-    def wait(self,QuietTime=5):
-    def loadData(self,filename):
+[![Python 2.7+](https://img.shields.io/badge/python-2.7%2B-blue)](https://www.python.org/)
+[![pythonnet](https://img.shields.io/badge/dependency-pythonnet-blue)](https://pythonnet.github.io/)
+[![numpy](https://img.shields.io/badge/dependency-numpy-blue)](https://numpy.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+---
+
+## Overview
+
+`pymetrohmautolab` provides a **high-level, class-based API** for controlling Metrohm Autolab instruments from Python. It wraps the official `EcoChemie.Autolab.Sdk` .NET assembly via `pythonnet` (clr), exposing:
+
+- **Direct instrument control** — `setPotential`, `setCellOn`, `setMode`, `setCurrentRange` via `autolab.Ei`
+- **Procedure execution** — load `.nox` files, run measurements, save results
+- **Data loading** — extract CV / EIS data from saved `.nox` files into numpy arrays
+- **Generic command/parameter access** — control any NOVA procedure, any parameter, any type
+- **Data acquisition** — read measured potential, current, time directly from procedures
+
+**Key design goals:**
+
+- **Zero-configuration** — sensible defaults for SDK paths on Windows
+- **Backward-compatible** — all v0.0.4 methods preserved
+- **Extensible** — generic `getCommand` / `setParameter*` / `getOutput*` API for any NOVA procedure
+- **Data-friendly** — built-in numpy array extraction from saved measurements
+
+---
+
+## Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Windows | 7/8/10 | .NET Framework required |
+| Python | 2.7 or 3.6+ | `pythonnet` works on both |
+| Metrohm Autolab SDK | 1.10+ | Must be installed separately |
+
+**Install dependencies:**
+
+```bash
+pip install pythonnet numpy
 ```
 
+**Install this package:**
 
-## how to use it:
-- Step 0,
-  install the required packages
+```bash
+pip install pymetrohmautolab
+```
 
-    ```bash
-    pip install pythonnet
-    pip install pyMetrohmAUTOLAB
-    ```
-  
-    And AUTOALB SDK v1.11 
-    You can download it [here](https://www.metrohm-autolab.com/Products/Echem/Software/SDK)
-- Step 1, import this package
+Or from source:
 
-    ```python
-    import Metrohm.AUTOLAB as EC
-    ```
+```bash
+git clone https://github.com/shuayliu/pymetrohmautolab.git
+cd pymetrohmautolab
+pip install .
+```
 
-- Step 2, tell Python where your instrument is located
+---
 
-    ```python
-    # tell the code where your SDK is located
-    hdw=R'C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\PGSTAT302N\HardwareSetup.FRA32M.xml',
-    sdk=R"C:\Program Files\Metrohm Autolab\autolabsdk\EcoChemie.Autolab.Sdk"
-    adx=R"C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\Adk.x"
-    ```
+## Quick Start
 
-- Setp 3, initialise the AUTOLAB class (C's bad habbit)
+```python
+from pymetrohmautolab import AUTOLAB
 
-    ```python
-    # initializing the class first
-    autolab = EC.AUTOLAB(sdk=sdk,adx=adx)
+# 1. Initialise (uses default SDK paths; override if needed)
+ec = AUTOLAB()
 
-    autolab.CMD = True # optional: Enable CMDLOG or not, it's good if you want to trace the code
-    ```
+# 2. Connect to instrument (PGSTAT204 example)
+hdw = R"C:\Program Files\Metrohm Autolab\autolabsdk\Hardware Setup Files\PGSTAT204\HardwareSetup.xml"
+if ec.connectToAutolab(hdw):
+    print("Connected!")
 
-- Step 4, Have fun with it
+    # 3. Direct instrument control
+    ec.setPotential(0.5)          # Set potential (V)
+    ec.setCellOn(True)           # Turn cell on
 
-    ```python
-    try:
-        if autolab.connectToAutolab(hdw): # first we need to connect to our instrument
-            print("Connecting to AUTOLAB successfully....")
-            # do measurement
-            autolab.measure(R"*.nox file path") # it will take times till measrement finish
-            autolab.saveAs(R"save file name")
-            `
-    except:
-        print("Connecting to AUTOLAB FAIL....")
-        return
-    ```
+    # 4. Load and measure a procedure
+    ec.measure(R"C:\data\Cyclic voltammetry.nox")
 
-- *Optional* Step 5, delete the instance
+    # 5. Read measured data back
+    potential = ec.getMeasuredPotential()  # list of floats
+    current = ec.getMeasuredCurrent()      # list of floats
+    time = ec.getMeasuredTime()            # list of floats
 
-    It is a good habit, but not always necessary.
+    # 6. Save result with timestamp
+    ec.saveAs(R"C:\data\result.nox")
 
-    ```python
-    # it is a good habit to del the instance at the end of the script
-    del autolab
-    ```
+    # 7. Disconnect
+    ec.disconnectAutolab()
+```
 
+---
+
+## API Reference
+
+### Connection
+
+| Method | Description |
+|--------|-------------|
+| `connectToAutolab(hdw)` | Connect to instrument using hardware setup XML |
+| `disconnectAutolab()` | Disconnect and release resources |
+| `isConnected()` | Returns `True` if connected |
+| `isMeasuring()` | Returns `True` if a measurement is running |
+
+### Direct Instrument Control (Ei)
+
+| Method | Description |
+|--------|-------------|
+| `setPotential(V)` | Set cell potential (V) via `autolab.Ei` |
+| `setCellOn(True/False)` | Turn cell on/off via `autolab.Ei` with overload protection |
+| `setMode('Potentialstatic'/'Galvanostatic')` | Set workstation mode via `autolab.Ei` |
+| `setCurrentRange(A)` | Set current range based on estimated current (A) |
+| `wait(s)` | Blocking wait (s) |
+
+### Measurement
+
+| Method | Description |
+|--------|-------------|
+| `loadProcedure(path)` | Load a `.nox` procedure file |
+| `measure(procedure=None)` | Load (if needed) and execute measurement with real-time logging |
+| `save()` | Save with timestamp suffix |
+| `saveAs(name)` | Save to a specific path (timestamp appended) |
+
+### Data Loading from Saved Files
+
+| Method | Description |
+|--------|-------------|
+| `loadData(filename)` | Load data from `.nox` file into numpy array (CV or EIS) |
+
+**CV data format** (columns): `SetpointApplied`, `EI_0.CalcCurrent`, `CalcTime`, `ScanNumber`
+
+**EIS data format** (columns): `Frequency`, `Zreal`, `Zimaginary`, `Zmodulus`, `-Phase`
+
+### Low-Level Generic API (NEW in v0.1.0)
+
+Access **any** command and parameter in any NOVA procedure by key name:
+
+```python
+# Set a parameter before measurement
+ec.setParameterDouble("FHCyclicVoltammetry2", "Upper vertex", 0.8)
+ec.setParameterDouble("FHCyclicVoltammetry2", "Scanrate", 0.1)
+
+# Read a parameter
+upper = ec.getParameterDouble("FHCyclicVoltammetry2", "Upper vertex")
+
+# Read measured data after measurement
+potential = ec.getMeasuredPotential()   # returns list
+current = ec.getMeasuredCurrent()
+time = ec.getMeasuredTime()
+```
+
+| Method | Description |
+|--------|-------------|
+| `getCommand(key)` | Get a `Command` object from the procedure |
+| `getParameter(cmdKey, paramKey)` | Get a raw `CommandParameter` object |
+| `setParameterDouble(...)` | Set double parameter |
+| `setParameterDoubleList(...)` | Set double-list parameter |
+| `setParameterInt(...)` | Set int parameter |
+| `setParameterBool(...)` | Set bool parameter |
+| `getParameterDouble(...)` | Get double parameter value |
+| `getParameterDoubleList(...)` | Get double-list value |
+| `getParameterInt(...)` | Get int parameter value |
+| `getParameterBool(...)` | Get bool parameter value |
+
+### Data Output Reading
+
+| Method | Description |
+|--------|-------------|
+| `getOutputDouble(cmdKey, outKey)` | Read output double value |
+| `getOutputDoubleList(cmdKey, outKey)` | Read output double-list value (time series) |
+| `getMeasuredPotential()` | Convenience for CV potential array |
+| `getMeasuredCurrent()` | Convenience for CV current array |
+| `getMeasuredTime()` | Convenience for CV time array |
+
+### CV Convenience Setters
+
+```python
+ec.setCVStartValue(0.0)
+ec.setCVUpperVertex(0.8)
+ec.setCVLowerVertex(-0.8)
+ec.setCVStep(0.005)
+ec.setCVIntervalTime(0.1)
+ec.setCVScanRate(0.1)
+```
+
+### Command & Parameter Key Constants
+
+```python
+from pymetrohmautolab import AUTOLAB
+
+# Command keys
+AUTOLAB.CMD_CV_STAIRCASE          # "FHCyclicVoltammetry2"
+AUTOLAB.CMD_FRA_SCAN               # "FIAScan"
+AUTOLAB.CMD_RECORD_SIGNALS         # "FHLevel"
+
+# CV parameter keys
+AUTOLAB.PARAM_START_VALUE          # "Start value"
+AUTOLAB.PARAM_UPPER_VERTEX         # "Upper vertex"
+AUTOLAB.PARAM_SCAN_RATE            # "Scanrate"
+
+# CV output keys
+AUTOLAB.OUTPUT_POTENTIAL           # "EI_0.CalcPotential"
+AUTOLAB.OUTPUT_CURRENT             # "EI_0.CalcCurrent"
+AUTOLAB.OUTPUT_TIME                # "CalcTime"
+```
+
+### Logging
+
+```python
+ec.CMD = True   # Enable real-time measurement logging (default)
+ec.CMD = False  # Disable logging
+```
+
+---
+
+## Compatibility with v0.0.4
+
+All v0.0.4 methods are **preserved**:
+
+- `AUTOLAB(sdk, adx)` constructor
+- `setSDKandADX(sdk, adx)`
+- `connectToAutolab(hdw)`
+- `disconnectAutolab()` / `Disconnect()`
+- `measure(procedure)`
+- `save()` / `saveAs(name)`
+- `setPotential(potential)`
+- `setCurrentRange(current_range)`
+- `setCellOn(on)`
+- `setMode(mode)`
+- `wait(seconds)`
+- `isMeasuring()`
+- `loadData(filename)`
+- `CMDLOG` logging utility
+- `appendSuffixToFilename`
+
+Migration: **zero code changes required** for existing scripts.
+
+---
+
+## Important Notes
+
+1. **Close NOVA before running** — the SDK cannot connect if NOVA holds the USB lock.
+2. **Hardware setup path** — `hdw` must point to the correct `HardwareSetup.*.xml` for your instrument (e.g., `PGSTAT204`, `PGSTAT302N`, `FRA32M`).
+3. **SDK path** — if your Autolab SDK is not in the default location, pass `sdk` and `adx` to the constructor.
+4. **.NET compatibility** — `pythonnet` requires the matching Python architecture (32-bit Python for 32-bit SDK, 64-bit for 64-bit). Most Autolab SDK installations are 32-bit.
+5. **numpy** — required for `loadData()` data extraction.
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE).
+
+This is an **unofficial** community package. Not affiliated with or endorsed by Metrohm Autolab.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+## Diff from v0.0.4
+
+See [DIFF.md](DIFF.md) for a detailed line-by-line comparison.
